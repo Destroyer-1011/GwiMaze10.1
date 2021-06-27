@@ -412,7 +412,6 @@ Finish:
                     maze[Y + b][X + a] = patterns[data[x][y]][b][a] == 'X' ? black : white;
                 }
             }
-            //view.sync();
             Y += 5;
         }
         X += 5;
