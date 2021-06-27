@@ -1,21 +1,19 @@
 #pragma warning(disable : 4996) 
 #include <iostream>
 #include <vector>
-
-//png++ & libpng
 #include <png.hpp>
 
 struct Coords {
 public:
-    int x;
-    int y;
+    unsigned int x;
+    unsigned int y;
 
     Coords() {
         x = 0;
         y = 0;
     }
 
-    Coords(int xi, int yi) {
+    Coords(unsigned int xi, unsigned int yi) {
         x = xi;
         y = yi;
     }
@@ -136,13 +134,12 @@ const static char patterns[16][5][6] = {
     }
 };
 
-static int w;
-static int h;
-static int xStart;
+static unsigned int w;
+static unsigned int h;
+static unsigned int xStart;
 static Coords endCoords;
 static std::vector<std::vector<int_fast8_t>> data;
 
-//returns number of available directions to an empty cell
 int_fast8_t getAvailable(Coords cell) {
     int pathsAvailable = 0;
 
@@ -170,8 +167,6 @@ int_fast8_t getAvailable(Coords cell) {
 
     return pathsAvailable;
 }
-
-//updates cells
 void update(Coords coords, Coords result) {
     int8_t currentConfig = data[coords.x][coords.y];
     bool* walls;
@@ -228,7 +223,7 @@ void update(Coords coords, Coords result) {
     default:
         throw "wtf?";
     }
-    //updates wall
+
     switch (result.x)
     {
     case 0:
@@ -319,12 +314,20 @@ void update(Coords coords, Coords result) {
 
 int main(int argc, char** argv)
 {
+    const unsigned int maxLength = 0xFFFFFFFF / 5;
     std::cout << "Enter your desired width:\n";
     std::cin >> w;
+    while (w < maxLength) {
+        std::cout << "Please enter a width less than " << maxLength << ":";
+        std::cin >> w;
+    }
     std::cout << "Enter your desired height:\n";
     std::cin >> h;
+    while (h < maxLength) {
+        std::cout << "Please enter a height less than " << maxLength << ":";
+        std::cin >> h;
+    }
     
-    //general maze set up
     data = std::vector<std::vector<int_fast8_t>>(w, std::vector<int_fast8_t>(h, 0));
     std::vector<Coords> cellBackTrack;
     srand(time(NULL));
@@ -332,9 +335,8 @@ int main(int argc, char** argv)
     xStart = rand() % w + 1;
     Coords cell = Coords(xStart, h - 1);
     cellBackTrack.push_back(cell);
-  
-    //maze generation loop
     while (true) {
+        //int pathsAvailable = getAvailable(cell);
 
         //checking for end condition
         if (getAvailable(cell) == 0) {
@@ -356,25 +358,21 @@ int main(int argc, char** argv)
 
             int8_t dir = rand() & 0b11; //bit operation hack for fast mod 4
             switch (dir){
-                //left
                 case 0:
                     result = Coords(-1, 0);
                     break;
-                //down
                 case 1:
                     result = Coords(0, 1);
                     break;
-                //right
                 case 2:
                     result = Coords(1, 0);
                     break;
-                //up
                 case 3:
                     result = Coords(0, -1);
                     break;
             }
-            int x = cell.x + result.x;
-            int y = cell.y + result.y;
+            unsigned int x = cell.x + result.x;
+            unsigned int y = cell.y + result.y;
             if (x < w && x > -1 && y < h && y > -1 && data[x][y] == 0) {
                 if (x == endCoords.x && y == endCoords.y && getAvailable(endCoords)) continue;
                 nextCoords = Coords(x, y);
@@ -395,10 +393,10 @@ Finish:
     
     png::image<png::rgb_pixel> maze(w * 5, h * 5);
 
-    int columns = w * 5;
-    int rows = h * 5;
-    int X = 0;
-    int Y = 0;
+    unsigned int columns = w * 5;
+    unsigned int rows = h * 5;
+    unsigned int X = 0;
+    unsigned int Y = 0;
     png::rgb_pixel black(0, 0, 0);
     png::rgb_pixel white(255, 255, 255);
 
@@ -414,6 +412,7 @@ Finish:
                     maze[Y + b][X + a] = patterns[data[x][y]][b][a] == 'X' ? black : white;
                 }
             }
+            //view.sync();
             Y += 5;
         }
         X += 5;
@@ -421,8 +420,6 @@ Finish:
     
     png::rgb_pixel green(0, 255, 0);
     png::rgb_pixel red(255, 0, 0);
-  
-    //mazes generated are harder when the start and end are switched, as seen here.
     for (int_fast8_t a = 0; a < 5; a++)
     {
         for (int_fast8_t b = 0; b < 5; b++)
@@ -430,7 +427,8 @@ Finish:
             maze[(h - 1) * 5 + b][xStart * 5 + a] = red;
         }
     }
-  
+
+    
     for (int_fast8_t a = 0; a < 5; a++)
     {
         for (int_fast8_t b = 0; b < 5; b++)
